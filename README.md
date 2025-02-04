@@ -14,12 +14,12 @@
 - Botão B conectado a GPIO 6
 - Display SSD1306 conectado via I2C (GPIO14 e GPIO15)
 
-## Funcionamento do projeto
+### Funcionamento do projeto
 
-# 1. Interação com o botão A
+### 1. Interação com o botão A
 - Ao pressionar o botão A o estado do LED RGB verde se altera (ligado/desligado).
 - A operação deve ser registrada tanto no display SSD1306 quanto no Serial Monitor.
-# 2. Interação com o botão B
+### 2. Interação com o botão B
 - Ao pressionar o botão B o estado do LED RGB azul se altera (ligado/desligado)
 - A operaração deve ser registrada tanto no display SSD1306 quanto no Serial Monitor
 - 
