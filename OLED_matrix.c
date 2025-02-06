@@ -9,12 +9,8 @@
 #include "inc/font.h"        // Bibioteca para ler os caracteres digitados
 #include "hardware/i2c.h"    // Biblioteca para ler o display da i2c
 
-#define FLAG false   
-
-// Define o número de pixels da matriz de LEDs   
-#define NUM_PIXELS 25   
-
 // Define as pinagens
+#define NUM_PIXELS 25   // Define o número de pixels da matriz de LEDs   
 #define LED_MATRIX 7    // Define a pinagem da matriz de LEDs
 #define LED_BLUE 12     // Define a pinagem do LED azul
 #define LED_GREEN 11    // Define a pinagem do LED verde
@@ -23,40 +19,43 @@
 #define I2C_PORT i2c1   // Define a porta do i2c       
 #define I2C_SDA 14      // Define a pinagem do SDA
 #define I2C_SCL 15      // Define a pinagem do SCL
-#define endereco 0x3C
+#define endereco 0x3C   // Endereço
+#define FLAG false      // Define a flag
 
-// Buffer de LEDs
-bool led_buffer[NUM_PIXELS]; 
+bool led_buffer[NUM_PIXELS]; // Buffer de LEDs
+ssd1306_t ssd; // Inicializa a estrutura do display
 
 // Protótipo das funções
 void init();                                                        // Função para inicializar gpios 
-void init_display();                                                // Função para inicializar o display   
-void msn1_display();                                                // Função para escrever uma mensagem no display OLED (ainda será especificada)             
+void init_display();                                                // Função para inicializar o display                
 void gpio_irq_handler(uint gpio, uint32_t events);                  // Função de interrupção
 void copy_array(bool *dest, const bool *src);                       // Função copiar os arrays
 void set_one_led(uint8_t r, uint8_t g, uint8_t b);                  // Função para definir a cor dos LEDs na matriz
 static inline void put_pixel(uint32_t pixel_grb);                   // Função para enviar um pixel para o buffer
 static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b);   // Função para converter um pixel para um inteiro
+void gpio_irq_handler2(uint gpio, uint32_t events);
 
 // Função principal
 int main()
-{
-    init(); //inicializa os elementos
-    
+{   
+    init(); //inicializa as gpios dos botões, matrix de leds e led rgb
+    init_display();
+
     // Configuração das interrupções dos botões
     gpio_set_irq_enabled_with_callback(BUTTON_A, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
     gpio_set_irq_enabled_with_callback(BUTTON_B, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
 
+    bool cor = true;
+
     while (true) 
-    { 
+    {   
         char c;
-        scanf("%c", &c);
         
         if (stdio_usb_connected()) // verifica se o dispositivo usb está conectada
         {
         if(scanf("%c", &c) == 1)
             { // Lê um caracter
-            printf("Recebido: '%c'\n", c);
+            printf("Caractere recebido: '%c'\n", c);
             switch(c)
                 {
                 case '0': copy_array(led_buffer, matrix_0); break;    
@@ -69,45 +68,19 @@ int main()
                 case '7': copy_array(led_buffer, matrix_7); break;
                 case '8': copy_array(led_buffer, matrix_8); break;
                 case '9': copy_array(led_buffer, matrix_9); break;
-                default:  copy_array(led_buffer, matrix_turn_off); break; //caso nenhum carac
+                default:  copy_array(led_buffer, matrix_turn_off); break;
                 }
-            }
+            
+            cor = !cor;
+            // Atualiza o conteúdo do display com animações
+            ssd1306_fill(&ssd, !cor); // Limpa o display
+            ssd1306_rect(&ssd, 3, 3, 122, 58, cor, !cor); // Desenha um retângulo
+            ssd1306_draw_string(&ssd, &c, 40, 30); // Desenha uma string
+            ssd1306_send_data(&ssd); // Atualiza o display
+            }       
         }
     }
-
-    return 0;
-}
-
-// Função para inicializar o display
-void init_display(){
-
-  i2c_init(I2C_PORT, 400 * 1000);              // I2C Initialisation. Using it at 400Khz.
-  gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);   // Set the GPIO pin function to I2C
-  gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);   // Set the GPIO pin function to I2C
-  gpio_pull_up(I2C_SDA);                       // Pull up the data line
-  gpio_pull_up(I2C_SCL);                       // Pull up the clock line
-
-}
-
-// Função para escrever a mensagem no display
-void msn1_display(){
-
-    ssd1306_t ssd; // Inicializa a estrutura do display
-    ssd1306_init(&ssd, WIDTH, HEIGHT, false, endereco, I2C_PORT); // Inicializa o display
-    ssd1306_config(&ssd); // Configura o display
-    ssd1306_send_data(&ssd); // Envia os dados para o display
-
-    // Limpa o display. O display inicia com todos os pixels apagados.
-    ssd1306_fill(&ssd, false);
-    ssd1306_send_data(&ssd);
-    
-    bool cor = true;
-    cor = !cor;
-    // Atualiza o conteúdo do display com animações
-    ssd1306_fill(&ssd, !cor); // Limpa o display
-    ssd1306_draw_string(&ssd, "op 1", 8, 10); // Desenha uma string     
-    ssd1306_send_data(&ssd); // Atualiza o display
-
+return 0;
 }
 
 // Função para inicializar os LEDs e Botões
@@ -140,6 +113,27 @@ void init(){
 
     // Inicialização do programa do WS2812
     ws2812_program_init(pio, sm, offset, LED_MATRIX, 800000, FLAG);
+
+}
+
+// Função para inicializar o display I2C
+void init_display(){
+    
+// inicializa o I2C em 400Khz.
+i2c_init(I2C_PORT, 400 * 1000);
+
+gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);  // Set the GPIO pin function to I2C
+gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);  // Set the GPIO pin function to I2C
+gpio_pull_up(I2C_SDA);                      // Pull up the data line
+gpio_pull_up(I2C_SCL);                      // Pull up the clock line
+
+ssd1306_init(&ssd, WIDTH, HEIGHT, false, endereco, I2C_PORT);   // Inicializa o display
+ssd1306_config(&ssd);                                           // Configura o display
+ssd1306_send_data(&ssd);                                        // Envia os dados para o display
+
+// Limpa o display. O display inicia com todos os pixels apagados.
+ssd1306_fill(&ssd, false);
+ssd1306_send_data(&ssd);
 
 }
 
