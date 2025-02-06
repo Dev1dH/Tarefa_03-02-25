@@ -35,7 +35,8 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(OLED_matrix OLED_matrix.c )
+
+add_executable(OLED_matrix OLED_matrix.c inc/ssd1306.c)
 
 pico_set_program_name(OLED_matrix "OLED_matrix")
 pico_set_program_version(OLED_matrix "0.1")
@@ -43,7 +44,7 @@ pico_set_program_version(OLED_matrix "0.1")
 pico_generate_pio_header(OLED_matrix ${CMAKE_CURRENT_LIST_DIR}/ws2812.pio)
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(OLED_matrix 1)
+pico_enable_stdio_uart(OLED_matrix 0)
 pico_enable_stdio_usb(OLED_matrix 1)
 
 # Add the standard library to the build
@@ -62,4 +63,3 @@ target_link_libraries(OLED_matrix
         )
 
 pico_add_extra_outputs(OLED_matrix)
-
