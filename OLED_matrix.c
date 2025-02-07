@@ -1,3 +1,23 @@
+/*
+    ATIVIDADE EMBARCATECH - TAREFA AULA SÍNCRONA 03/02
+    Aluno: Devid Henrique Pereira dos Santos
+    Matrícula: TIC370100380
+
+    O presente programa tem como objetivo geral, aplicar a comunicação serial
+    os componentes da placa BitDogLab e o computador.Para o funcionamento 
+    adequado a BitDogLab precisa estar com a USB ao PC.
+
+    FUNCIONAMENTO
+    1. Apertar o botão A acende e apaga o LED verde, sinalizando o seu sinal
+       atual no display OLED e no serial monitor.
+    2. Apertar o botão B acende e apaga o LED azul, sinalizando o seu sinal 
+       atual no display OLED e no serial monitor. 
+    3. Digitar um número entre 0 e 9 no serial monitor, além de imprimir no
+       display OLED o número, acende a matriz de LEDs para desenhar o dígito
+       correspondente. 
+    4. Digitar qualquer letra entre A e Z, imprime o caracter no displau OLED.
+*/
+
 //Bibliotecas
 #include <stdio.h>           // Biblioteca padrão da linguagem C (implmentar scanf, por exemplo)
 #include "pico/stdlib.h"     // Biblioteca padrão da pico sdk   
@@ -6,7 +26,7 @@
 #include "hardware/timer.h"  // Biblioteca para habilitar timer do hardware
 #include "number.h"          // Biblioteca para desenhar cada número na matrix de LED
 #include "inc/ssd1306.h"     // Biblioteca da ssd1306
-#include "inc/font.h"        // Bibioteca para ler os caracteres digitados
+#include "inc/font.h"        // Bibioteca para ler os caracteres (A-Z e 0-9)
 #include "hardware/i2c.h"    // Biblioteca para ler o display da i2c
 
 // Define as pinagens
@@ -19,21 +39,21 @@
 #define I2C_PORT i2c1   // Define a porta do i2c       
 #define I2C_SDA 14      // Define a pinagem do SDA
 #define I2C_SCL 15      // Define a pinagem do SCL
-#define endereco 0x3C   // Endereço
 #define FLAG false      // Define a flag
+#define ADRESS 0x3C     // Endereço
 
+bool cor = true;
 bool led_buffer[NUM_PIXELS]; // Buffer de LEDs
 ssd1306_t ssd; // Inicializa a estrutura do display
 
 // Protótipo das funções
-void init();                                                        // Função para inicializar gpios 
-void init_display();                                                // Função para inicializar o display                
-void gpio_irq_handler(uint gpio, uint32_t events);                  // Função de interrupção
-void copy_array(bool *dest, const bool *src);                       // Função copiar os arrays
-void set_one_led(uint8_t r, uint8_t g, uint8_t b);                  // Função para definir a cor dos LEDs na matriz
-static inline void put_pixel(uint32_t pixel_grb);                   // Função para enviar um pixel para o buffer
-static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b);   // Função para converter um pixel para um inteiro
-void gpio_irq_handler2(uint gpio, uint32_t events);
+void init();                                                       // Função para inicializar gpios 
+void init_display();                                               // Função para inicializar o display                
+void gpio_irq_handler(uint gpio, uint32_t events);                 // Função de interrupção
+void copy_array(bool *dest, const bool *src);                      // Função copiar os arrays
+void set_one_led(uint8_t r, uint8_t g, uint8_t b);                 // Função para definir a cor dos LEDs na matriz
+static inline void put_pixel(uint32_t pixel_grb);                  // Função para enviar um pixel para o buffer
+static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b);  // Função para converter um pixel para um inteiro
 
 // Função principal
 int main()
@@ -45,38 +65,36 @@ int main()
     gpio_set_irq_enabled_with_callback(BUTTON_A, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
     gpio_set_irq_enabled_with_callback(BUTTON_B, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
 
-    bool cor = true;
-
     while (true) 
     {   
-        char c;
+        char c; // define a variável do tipo char
         
         if (stdio_usb_connected()) // verifica se o dispositivo usb está conectada
         {
-        if(scanf("%c", &c) == 1)
-            { // Lê um caracter
-            printf("Caractere recebido: '%c'\n", c);
+        if(scanf("%c", &c) == 1) // Lê um caracter
+            { 
+            printf("Caractere recebido: '%c'\n", c); // imprime a mensagem "caractere recebido" e a variável digitada
             switch(c)
                 {
-                case '0': copy_array(led_buffer, matrix_0); break;    
-                case '1': copy_array(led_buffer, matrix_1); break;
-                case '2': copy_array(led_buffer, matrix_2); break;
-                case '3': copy_array(led_buffer, matrix_3); break;
-                case '4': copy_array(led_buffer, matrix_4); break;
-                case '5': copy_array(led_buffer, matrix_5); break;
-                case '6': copy_array(led_buffer, matrix_6); break;
-                case '7': copy_array(led_buffer, matrix_7); break;
-                case '8': copy_array(led_buffer, matrix_8); break;
-                case '9': copy_array(led_buffer, matrix_9); break;
-                default:  copy_array(led_buffer, matrix_turn_off); break;
+                case '0': copy_array(led_buffer, matrix_0); break; // acende a matriz de leds para digito 0   
+                case '1': copy_array(led_buffer, matrix_1); break; // acende a matriz de leds para dígito 1
+                case '2': copy_array(led_buffer, matrix_2); break; // acende a matriz de leds para dígito 2
+                case '3': copy_array(led_buffer, matrix_3); break; // acende a matriz de leds para dígito 3
+                case '4': copy_array(led_buffer, matrix_4); break; // acende a matriz de leds para dígito 4
+                case '5': copy_array(led_buffer, matrix_5); break; // acende a matriz de leds para dígito 5
+                case '6': copy_array(led_buffer, matrix_6); break; // acende a matriz de leds para dígito 6
+                case '7': copy_array(led_buffer, matrix_7); break; // acende a matriz de leds para dígito 7
+                case '8': copy_array(led_buffer, matrix_8); break; // acende a matriz de leds para dígito 8
+                case '9': copy_array(led_buffer, matrix_9); break; // acende a matriz de leds para dígito 9
+                default:  copy_array(led_buffer, matrix_turn_off); break; // apaga todos os leds da matriz
                 }
             
             cor = !cor;
             // Atualiza o conteúdo do display com animações
-            ssd1306_fill(&ssd, !cor); // Limpa o display
+            ssd1306_fill(&ssd, !cor);                     // Limpa o display
             ssd1306_rect(&ssd, 3, 3, 122, 58, cor, !cor); // Desenha um retângulo
-            ssd1306_draw_string(&ssd, &c, 40, 30); // Desenha uma string
-            ssd1306_send_data(&ssd); // Atualiza o display
+            ssd1306_draw_string(&ssd, &c, 40, 30);        // Desenha uma string
+            ssd1306_send_data(&ssd);                      // Atualiza o display
             }       
         }
     }
@@ -127,7 +145,7 @@ gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);  // Set the GPIO pin function to I2C
 gpio_pull_up(I2C_SDA);                      // Pull up the data line
 gpio_pull_up(I2C_SCL);                      // Pull up the clock line
 
-ssd1306_init(&ssd, WIDTH, HEIGHT, false, endereco, I2C_PORT);   // Inicializa o display
+ssd1306_init(&ssd, WIDTH, HEIGHT, false, ADRESS, I2C_PORT);   // Inicializa o display
 ssd1306_config(&ssd);                                           // Configura o display
 ssd1306_send_data(&ssd);                                        // Envia os dados para o display
 
@@ -140,6 +158,8 @@ ssd1306_send_data(&ssd);
 // Função de interrupção com debounce
 void gpio_irq_handler(uint gpio, uint32_t events)
 {
+    cor = !cor;
+
     volatile static uint32_t last_time = 0; // Último tempo que um botão foi pressionado
     volatile uint32_t current_time = to_ms_since_boot(get_absolute_time()); // Tempo atual
 
@@ -149,11 +169,49 @@ void gpio_irq_handler(uint gpio, uint32_t events)
     }
 
     last_time = current_time; // Atualiza o tempo do último botão pressionado
-        
-    if (gpio == BUTTON_A) { // Verifica se o botão A foi pressionado
+    
+    // Variáveis para imprimir mensagens no display OLED
+    char *ledG_on_msg  = "LED VERDE ON";  
+    char *ledG_off_msg = "LED VERDE OFF";
+    char *ledB_on_msg  = "LED AZUL ON";
+    char *ledB_off_msg = "LED AZUL OFF";
+    
+    // Verifica se o botão A foi pressionado
+    if (gpio == BUTTON_A){ 
         gpio_put(LED_GREEN, !gpio_get(LED_GREEN)); // Inverte o estado atual do LED verde
-    } else if (gpio == BUTTON_B) { // Verifica se o botão B foi pressionado
+        if(gpio_get(LED_GREEN)==1){
+            printf("LED VERDE ACESO!\n"); // Se o led verde for aceso, imprime a mensagem "LED VERDE" no serial monitor
+            ssd1306_fill(&ssd, !cor);                       // Limpa o display
+            ssd1306_rect(&ssd, 3, 3, 122, 58, cor, !cor);   // Desenha um retângulo
+            ssd1306_draw_string(&ssd, ledG_on_msg, 15, 30); // Desenha a string "LED VERDE ON"
+            ssd1306_send_data(&ssd);                        // Atualiza o display
+        }
+        else if(gpio_get(LED_GREEN)==0){
+            printf("LED VERDE APAGADO!\n"); // Se o led verde for apagado, imprime a mensagem "LED VERDE" no serial monitor
+            ssd1306_fill(&ssd, !cor);                        // Limpa o display
+            ssd1306_rect(&ssd, 3, 3, 122, 58, cor, !cor);    // Desenha um retângulo
+            ssd1306_draw_string(&ssd, ledG_off_msg, 15, 30); // Desenha a string "LED VERDE OFF"
+            ssd1306_send_data(&ssd);                         // Atualiza o display
+        }
+    } 
+    
+    // Verifica se o botão B foi pressionado
+    else if (gpio == BUTTON_B){ 
         gpio_put(LED_BLUE, !gpio_get(LED_BLUE));  // Inverte o estado atual do LED azul
+        if(gpio_get(LED_BLUE)==1){
+            printf("\nLED AZUL ACESO!\n");  // Se o led azul for aceso, imprime a mensagem "LED azul" no serial monitor
+            ssd1306_fill(&ssd, !cor);                       // Limpa o display
+            ssd1306_rect(&ssd, 3, 3, 122, 58, cor, !cor);   // Desenha um retângulo
+            ssd1306_draw_string(&ssd, ledB_on_msg, 15, 30); // Desenha a string "LED BLUE ON"
+            ssd1306_send_data(&ssd);                        // Atualiza o display
+        }
+        else if(gpio_get(LED_BLUE)==0){ // Se o led azul for apagado, imprime a mensagem "LED azul apagado" no serial monitor
+            printf("LED AZUL APAGADO!\n");
+            ssd1306_fill(&ssd, !cor);                        // Limpa o display
+            ssd1306_rect(&ssd, 3, 3, 122, 58, cor, !cor);    // Desenha um retângulo
+            ssd1306_draw_string(&ssd, ledB_off_msg, 15, 30); // Desenha a string "LED AZUL OFF"
+            ssd1306_send_data(&ssd);                         // Atualiza o display
+        }
     }
 }
 
