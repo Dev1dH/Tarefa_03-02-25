@@ -18,8 +18,11 @@
 
 ### 1. Interação com o botão A
 - Ao pressionar o botão A o estado do LED RGB verde se altera (ligado/desligado).
-- A operação deve ser registrada tanto no display SSD1306 quanto no Serial Monitor.
+- Uma mensagem é mostrada no display SSD1306 e no Serial Monitor "LED VERDE ON" e "LED VERDE OFF".
+- 
 ### 2. Interação com o botão B
 - Ao pressionar o botão B o estado do LED RGB azul se altera (ligado/desligado)
-- A operaração deve ser registrada tanto no display SSD1306 quanto no Serial Monitor
-- 
+- Uma mensagem é mostrada no display SSD1306 e no Serial Monitor "LED AZUL ON" e "LED AZUL OFF".
+### 3. Interação com serial monitor
+- Digitar qualquer caracterer entre A e Z e 0 e 9, reproduz o mesmo caracter no display OLED.
+- Se o caracter for entre um dígito, o dígito correspondente é desenhado na matriz de LEDs.
