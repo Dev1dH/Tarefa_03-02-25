@@ -1,5 +1,5 @@
 # Tarefa_03-02-25
-
+Vídeo da demonstração: https://youtu.be/WGAawecnusw
 ## Objetivos
 - Compreender o funcionamento e a aplicação de comunicação serial em microcontroladores
 - Aplicar os conhecimentos adquiridos sobre UART e I2C na prática.
