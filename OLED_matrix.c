@@ -30,17 +30,21 @@
 #include "hardware/i2c.h"    // Biblioteca para ler o display da i2c
 
 // Define as pinagens
-#define NUM_PIXELS 25   // Define o número de pixels da matriz de LEDs   
-#define LED_MATRIX 7    // Define a pinagem da matriz de LEDs
-#define LED_BLUE 12     // Define a pinagem do LED azul
-#define LED_GREEN 11    // Define a pinagem do LED verde
-#define BUTTON_A 5      // Define a pinagem do botão A
-#define BUTTON_B 6      // Define a pinagem do botão B
-#define I2C_PORT i2c1   // Define a porta do i2c       
-#define I2C_SDA 14      // Define a pinagem do SDA
-#define I2C_SCL 15      // Define a pinagem do SCL
-#define FLAG false      // Define a flag
-#define ADRESS 0x3C     // Endereço
+#define NUM_PIXELS 25       // Define o número de pixels da matriz de LEDs   
+#define LED_MATRIX 7        // Define a pinagem da matriz de LEDs
+#define LED_BLUE 12         // Define a pinagem do LED azul
+#define LED_GREEN 11        // Define a pinagem do LED verde
+#define BUTTON_A 5          // Define a pinagem do botão A
+#define BUTTON_B 6          // Define a pinagem do botão B
+#define I2C_PORT i2c1       // Define a porta do i2c       
+#define I2C_SDA 14          // Define a pinagem do SDA
+#define I2C_SCL 15          // Define a pinagem do SCL
+#define FLAG false          // Define a flag
+#define ADRESS 0x3C         // Endereço
+#define UART_ID uart0       // Seleciona a UART0
+#define BAUD_RATE 115200    // Define a taxa de transmissão
+#define UART_TX_PIN 0       // Pino GPIO usado para TX
+#define UART_RX_PIN 1       // Pino GPIO usado para RX
 
 bool cor = true;
 bool led_buffer[NUM_PIXELS]; // Buffer de LEDs
@@ -60,7 +64,8 @@ int main()
 {   
     init(); //inicializa as gpios dos botões, matrix de leds e led rgb
     init_display();
-
+    uart_init(UART_ID, BAUD_RATE);
+    
     // Configuração das interrupções dos botões
     gpio_set_irq_enabled_with_callback(BUTTON_A, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
     gpio_set_irq_enabled_with_callback(BUTTON_B, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
@@ -90,7 +95,7 @@ int main()
                 }
             
             cor = !cor;
-            // Atualiza o conteúdo do display com animações
+            // Atualiza o display com o caractere digitado
             ssd1306_fill(&ssd, !cor);                     // Limpa o display
             ssd1306_rect(&ssd, 3, 3, 122, 58, cor, !cor); // Desenha um retângulo
             ssd1306_draw_string(&ssd, &c, 40, 30);        // Desenha uma string
